@@ -181,26 +181,34 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary-50 via-white to-primary-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-brand-50/30 flex flex-col relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-brand-400/20 to-accent-400/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-brand-500/10 to-accent-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }}></div>
+      </div>
+      
       {/* Navigation Header */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-secondary-200/50 sticky top-0 z-50">
+      <nav className="bg-white/90 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-50 shadow-soft">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-medium">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-11 h-11 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center shadow-large animate-glow">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-secondary-900">DocuGen Pro</h1>
-                <p className="text-xs text-secondary-500 font-medium">Construction Intelligence</p>
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight">DocuGen Pro</h1>
+                <p className="text-xs text-slate-500 font-medium tracking-wide">AI Construction Intelligence</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="hidden sm:flex items-center space-x-2 text-sm text-secondary-600">
-                <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse-soft"></div>
-                <span className="font-medium">AI Powered</span>
+              <div className="hidden sm:flex items-center space-x-3">
+                <div className="flex items-center space-x-2 px-3 py-1.5 bg-success-50 border border-success-200 rounded-full">
+                  <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse-soft"></div>
+                  <span className="text-sm font-medium text-success-700">AI Powered</span>
+                </div>
               </div>
             </div>
           </div>
@@ -208,51 +216,54 @@ const App: React.FC = () => {
       </nav>
 
       <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8">
-        <div className="w-full max-w-6xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto relative z-10">
           {/* Hero Section */}
-          <header className="text-center mb-12 animate-fade-in">
-            <div className="inline-flex items-center px-4 py-2 bg-primary-50 border border-primary-200 rounded-full text-primary-700 text-sm font-medium mb-6">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <header className="text-center mb-16 animate-fade-in">
+            <div className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-brand-50 to-accent-50 border border-brand-200/50 rounded-full text-brand-700 text-sm font-semibold mb-8 shadow-soft hover:shadow-medium transition-all duration-300">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              Powered by Advanced AI Technology
+              <span className="bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">Powered by Advanced AI Technology</span>
             </div>
-            <h1 className="text-5xl sm:text-6xl font-bold text-secondary-900 tracking-tight mb-6">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-slate-900 tracking-tight mb-8 leading-tight">
               Transform Insurance Claims into
-              <span className="block bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-brand-600 via-brand-500 to-accent-500 bg-clip-text text-transparent mt-2">
                 Professional Documents
               </span>
             </h1>
-            <p className="mt-6 text-xl text-secondary-600 max-w-3xl mx-auto leading-relaxed">
-              Upload your insurance claim estimate PDF and watch our AI instantly generate a complete project management suite—scope of work, budgets, work orders, and selection schedules.
+            <p className="mt-8 text-xl sm:text-2xl text-slate-600 max-w-4xl mx-auto leading-relaxed font-light">
+              Upload your insurance claim estimate PDF and watch our <span className="font-semibold text-brand-600">advanced AI</span> instantly generate a complete project management suite—scope of work, budgets, work orders, and selection schedules.
             </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-secondary-500">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-success-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mt-12 flex flex-wrap justify-center gap-8 text-sm">
+              <div className="flex items-center bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-soft border border-slate-200/50">
+                <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                 </svg>
-                Instant Processing
+                <span className="font-medium text-slate-700">Instant Processing</span>
               </div>
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-success-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-soft border border-slate-200/50">
+                <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                 </svg>
-                Professional Output
+                <span className="font-medium text-slate-700">Professional Output</span>
               </div>
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-success-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-soft border border-slate-200/50">
+                <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                 </svg>
-                Editable Results
+                <span className="font-medium text-slate-700">Editable Results</span>
               </div>
             </div>
-          </p>
-        </header>
+          </header>
 
         {view === 'documents' ? (
           <DocumentsPage initialDocuments={documents} onBack={handleBackToUploader} />
         ) : (
-          <main className="bg-white/70 backdrop-blur-sm p-8 sm:p-12 rounded-3xl shadow-strong border border-white/50 max-w-4xl mx-auto animate-slide-up">
+          <main className="bg-white/80 backdrop-blur-xl p-10 sm:p-16 rounded-3xl shadow-premium border border-white/60 max-w-5xl mx-auto animate-slide-up relative overflow-hidden">
+            {/* Card decoration */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 via-accent-500 to-brand-500"></div>
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-brand-100/50 to-accent-100/50 rounded-full blur-2xl"></div>
+            
             <PdfUploader 
               onFileChange={handleFileChange} 
               onSubmit={handleSubmit} 
@@ -263,14 +274,14 @@ const App: React.FC = () => {
             {isLoading && <Loader />}
 
             {error && (
-              <div className="mt-8 p-6 bg-error-50 border border-error-200 text-error-800 rounded-2xl shadow-soft">
+              <div className="mt-10 p-8 bg-gradient-to-r from-error-50 to-error-50/80 border border-error-200/60 text-error-800 rounded-2xl shadow-large backdrop-blur-sm">
                 <div className="flex items-start">
-                  <svg className="w-6 h-6 text-error-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-7 h-7 text-error-500 mr-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <h3 className="font-bold text-lg mb-2">Processing Error</h3>
-                    <p className="text-error-700">{error}</p>
+                    <h3 className="font-bold text-xl mb-3 text-error-900">Processing Error</h3>
+                    <p className="text-error-700 leading-relaxed">{error}</p>
                   </div>
                 </div>
               </div>
@@ -278,14 +289,14 @@ const App: React.FC = () => {
           </main>
         )}
         
-        <footer className="text-center mt-16 text-secondary-400 text-sm">
-          <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6">
-            <p>&copy; 2024 DocuGen Pro. All Rights Reserved.</p>
+        <footer className="text-center mt-20 text-slate-400 text-sm relative z-10">
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-8">
+            <p className="font-medium">&copy; 2024 DocuGen Pro. All Rights Reserved.</p>
             <div className="flex items-center space-x-4">
-              <span className="w-1 h-1 bg-secondary-300 rounded-full hidden sm:block"></span>
-              <span>Powered by Advanced AI</span>
-              <span className="w-1 h-1 bg-secondary-300 rounded-full hidden sm:block"></span>
-              <span>Enterprise Ready</span>
+              <span className="w-1.5 h-1.5 bg-slate-300 rounded-full hidden sm:block"></span>
+              <span className="font-medium">Powered by Advanced AI</span>
+              <span className="w-1.5 h-1.5 bg-slate-300 rounded-full hidden sm:block"></span>
+              <span className="font-medium">Enterprise Ready</span>
             </div>
           </div>
         </footer>

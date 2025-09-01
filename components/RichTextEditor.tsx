@@ -47,27 +47,27 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col border border-gray-300 rounded-lg shadow-inner focus-within:ring-2 focus-within:ring-brand-blue focus-within:border-brand-blue">
+    <div className="w-full h-full flex flex-col border border-slate-300/60 rounded-2xl shadow-inner focus-within:ring-2 focus-within:ring-brand-500/50 focus-within:border-brand-400 transition-all duration-300 overflow-hidden bg-white/50 backdrop-blur-sm">
       {/* Toolbar */}
-      <div className="flex items-center p-2 border-b bg-gray-50 rounded-t-lg">
+      <div className="flex items-center p-4 border-b border-slate-200/60 bg-gradient-to-r from-slate-50/80 to-slate-100/60 backdrop-blur-sm">
         <ToolbarButton onExec={() => execCmd('bold')} aria-label="Bold">
-           <strong className="font-bold text-lg">B</strong>
+           <strong className="font-bold text-lg text-slate-700">B</strong>
         </ToolbarButton>
         <ToolbarButton onExec={() => execCmd('italic')} aria-label="Italic">
-            <em className="font-serif text-lg">I</em>
+            <em className="font-serif text-lg text-slate-700">I</em>
         </ToolbarButton>
         <ToolbarButton onExec={() => execCmd('underline')} aria-label="Underline">
-            <u className="text-lg">U</u>
+            <u className="text-lg text-slate-700">U</u>
         </ToolbarButton>
         <ToolbarButton onExec={() => execCmd('strikethrough')} aria-label="Strikethrough">
-            <s className="text-lg">S</s>
+            <s className="text-lg text-slate-700">S</s>
         </ToolbarButton>
-        <div className="border-l h-5 mx-2"></div>
+        <div className="border-l border-slate-300 h-6 mx-3"></div>
         <ToolbarButton onExec={() => execCmd('insertUnorderedList')} aria-label="Unordered List">
-           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+           <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
         </ToolbarButton>
         <ToolbarButton onExec={() => execCmd('insertOrderedList')} aria-label="Ordered List">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12h10M7 6h10M7 18h10M4 6h.01M4 12h.01M4 18h.01"></path></svg>
+          <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12h10M7 6h10M7 18h10M4 6h.01M4 12h.01M4 18h.01"></path></svg>
         </ToolbarButton>
       </div>
 
@@ -76,8 +76,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
         ref={editorRef}
         onInput={handleInput}
         contentEditable={true}
-        className="w-full flex-grow p-4 bg-white rounded-b-lg overflow-y-auto focus:outline-none"
-        style={{ minHeight: '50vh' }}
+        className="w-full flex-grow p-6 bg-white/80 backdrop-blur-sm overflow-y-auto focus:outline-none text-slate-800 leading-relaxed"
+        style={{ minHeight: '55vh' }}
         aria-label="Document content editor"
       />
     </div>
