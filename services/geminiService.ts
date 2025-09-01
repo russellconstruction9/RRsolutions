@@ -1,8 +1,5 @@
-import { GoogleGenAI, Type } from "@google/genai";
 
-// Dynamically import pdfjs-dist and set up worker
-const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs');
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.mjs';
+import { GoogleGenAI, Type } from "@google/genai";
 
 const API_KEY = process.env.API_KEY;
 if (!API_KEY) {
@@ -24,127 +21,140 @@ const fileToGenerativePart = async (file: File) => {
     };
 };
 
-const getBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-        reader.onerror = error => reject(error);
-    });
+const withBackoff = async <T>(fn: () => Promise<T>, tries = 3): Promise<T> => {
+    let delay = 1000;
+    for (let i = 0; i < tries; i++) {
+        try {
+            return await fn();
+        } catch (e: any) {
+            console.warn(`API call attempt ${i + 1} of ${tries} failed. Retrying in ${delay}ms...`, e);
+            const isRetriable = e.message?.includes('500') || e.message?.includes('503') || e.message?.includes('429') || e.message?.includes('UNKNOWN');
+            if (!isRetriable || i === tries - 1) {
+                throw e; 
+            }
+            await new Promise(r => setTimeout(r, delay));
+            delay *= 2; 
+        }
+    }
+    throw new Error("All retry attempts failed.");
 };
 
-const getMasterPrompt = () => {
-    // FIX: The large template literal was causing parsing errors.
-    // Splitting it into two parts and concatenating them resolves the issue without changing the content.
-    return `You are an AI assistant specialized in construction project management, operating with the expertise of a seasoned General Contractor and Project Manager. Your primary directive is to analyze a provided property insurance claim estimate (PDF) and transform it into a cohesive set of actionable project management documents. Accuracy, internal consistency, and data validation are paramount.
 
-**Primary Data Validation Protocol**
+const getSystemInstruction = () => {
+    return `You are an AI assistant specialized in construction project management. Analyze the provided property insurance claim estimate PDF and transform it into a structured JSON object.
 
-Before generating any output, you must first perform these primary validation steps:
+**Validation Rules:**
+1.  **Total Project Budget:** The definitive budget is the dollar amount in the PDF filename (e.g., "Estimate-$12345.67.pdf"). If not present, use the final "Replacement Cost Value" (RCV) from the PDF's summary. You must state the source you used in the 'budgetSourceInfo' field.
+2.  **Budget Calculation:** For budget line items, use 80% of the original RCV as the direct cost for materials and labor. The remaining 20% should be accounted for in the 'overheadAndProfit' calculation to ensure the final total matches the definitive budget.
+3.  **Plain Language:** Translate insurance jargon (e.g., "R&R," "DET") into clear, actionable tasks (e.g., "Remove and replace," "Detach and reset").
 
-1.  **Establish the Definitive Total Project Budget:**
-    *   Inspect the filename of the uploaded PDF for a dollar amount (e.g., "Estimate-$12345.67.pdf").
-    *   Locate the final "Replacement Cost Value" (RCV) total within the PDF's summary page.
-    *   **Hierarchy of Truth:** If both sources are available and their values differ, the amount in the filename is the definitive "TOTAL PROJECT BUDGET." If the filename contains no value, the RCV from the PDF summary is the definitive total. You must state which source you are using at the beginning of Section 2.
-
-2.  **Initial Data Reconciliation:**
-    *   Briefly scan the line item details and compare their sum to the summary totals. Note any significant discrepancies in the source document itself, as this may indicate an error in the original estimate. This is for awareness, but the Definitive Total Project Budget from Step 1 remains the target for your final outputs.
-
-**Your Task & Required Outputs:**
-
-Analyze the entire document, then generate a single response containing the required sections, formatted exactly as described below. All sections must be internally consistent and reconcile with each other. **IMPORTANT: For any section that requires a table, you MUST generate that table using HTML tags (<table>, <thead>, <tbody>, <tr>, <th>, <td>). Do NOT use markdown tables.**
-
----
-
-### Section 1: Project Scope of Work
-
-This is a narrative overview of the project, written in plain English for the client and crew. Use standard markdown for this section (headings, lists, bold, etc.).
-
-*   **Header:** Start with a clear header including the Client's Name, Project Address, and the Insurance Claim Number, extracted directly from the PDF.
-*   **Summary:** Write a brief, one-paragraph "Overall Project Summary" that describes the project's purpose and the general areas of work.
-*   **Structure by Area:** Break the scope down by physical location (e.g., "Basement - Storage Room"). Under each location, create "Demolition" and "Restoration" sub-headings and list the tasks using bullet points.
-*   **Language and Tone:** Translate insurance jargon (e.g., "R&R," "DET," "F&I") into clear, actionable tasks (e.g., "Remove and replace," "Detach and reset," "Furnish and install"). Combine related line items into single, logical instructions.
-*   **Validation Check:** Ensure every financially significant line item from the estimate is represented by an actionable task in this scope to prevent omissions.
-
----
-
-### Section 2: Project Budget & Job Costing Summary (Consolidated RCV Budget)
-
-This section provides a high-level project budget for internal GC use. **You MUST format this section as an HTML table.**
-
-*   **Budget Source Declaration:** Begin this section with a paragraph stating the source and value of the definitive TOTAL PROJECT BUDGET.
-*   **Format:** Create an HTML table.
-*   **Focus on RCV:** All budgeted values must be based on the RCV from the insurance estimate.
-*   **Overhead & Profit Calculation Logic (CRITICAL):**
-    *   **Part A - Line Item Budgets:** 80% of each line item's original RCV is the direct cost. Allocate this to "Material Budget (RCV)" and "Labor Budget (RCV)".
-    *   **Part B - Final Reconciliation:** "Overhead & Profit" is a balancing figure calculated at the end.
-*   **Cost Separation Logic:** Intelligently split the 80% adjusted RCV for each line item into Material and Labor.
-*   **Table Columns:** The \`<th>\` elements should be: "Category/Task", "Description", "Material Budget (RCV)", "Labor Budget (RCV)", "Total Budget (RCV)".
-*   **Totals Section:** The final \`<tbody>\` rows must calculate and display: "Subtotal (Line Items)", "Material Sales Tax", "TOTAL PROJECT BUDGET", and "Overhead & Profit". The grand total must exactly match the definitive budget.
-
----
-
-### Contractor Work Orders (Multiple Sections)
-
-For each trade identified in the budget (e.g., Painting, Drywall, etc.), generate a separate and distinct work order section. Each work order **MUST** start with the exact header format: \`### Work Order: [TRADE NAME]\`. For example, \`### Work Order: Painting\`.
-
-*   **Format for Each Work Order Section:** Use standard markdown within each section.
-    *   \`**BUDGET (RCV):** (e.g., $561.51)\`
-    *   \`**KEY MATERIALS & QUANTITIES:** (e.g., ~152 SF of wall painting, 1 door to be painted)\`
-    *   \`**INSTRUCTIONS:**\` (A numbered list of specific tasks)
-*   **Validation:** The \`BUDGET (RCV)\` must exactly match the "Total Budget (RCV)" for that trade's category in the Section 2 table.
-
----
-
-### Section 4: Customer Selection & Material Allowance Schedule
-
-Provide the client with a clear schedule of materials they need to select. **You MUST format this section as an HTML table.**
-
-*   **Header:** Start with a markdown heading: \`### Customer Selection & Material Allowance Schedule\`
-*   **Introductory Note:** Add a brief introductory paragraph.
-*   **Format:** Create an HTML table with \`<th>\` columns: "Selection Item", "Location(s)", "Total Quantity", "Material Allowance (per Unit)", "Total Material Budget (RCV)".
-*   **Calculation Logic:**
-    *   \`Total Material Budget (RCV)\` is the sum of the 80% adjusted RCV for the material portion.
-    *   \`Total Quantity\` is the sum of quantities from the PDF.
-    *   \`Material Allowance (per Unit)\` = \`Total Material Budget (RCV)\` / \`Total Quantity\`.
+**Task:**
+Analyze the entire document and generate a single, valid JSON object that adheres to the provided schema. The data must be internally consistent. For example, the total of the work order budgets should align with the main project budget.
 `;
 }
 
+const responseSchema = {
+    type: Type.OBJECT,
+    properties: {
+        scopeOfWork: {
+            type: Type.OBJECT,
+            description: "Narrative project scope, broken down by location.",
+            properties: {
+                clientName: { type: Type.STRING },
+                projectAddress: { type: Type.STRING },
+                claimNumber: { type: Type.STRING },
+                overallSummary: { type: Type.STRING },
+                breakdown: {
+                    type: Type.ARRAY,
+                    description: "Scope broken down by area.",
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            area: { type: Type.STRING },
+                            demolitionTasks: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            restorationTasks: { type: Type.ARRAY, items: { type: Type.STRING } },
+                        },
+                        required: ["area"]
+                    }
+                }
+            }
+        },
+        projectBudget: {
+            type: Type.OBJECT,
+            description: "Consolidated RCV budget summary.",
+            properties: {
+                budgetSourceInfo: { type: Type.STRING },
+                lineItems: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            category: { type: Type.STRING },
+                            description: { type: Type.STRING },
+                            materialBudget: { type: Type.NUMBER },
+                            laborBudget: { type: Type.NUMBER },
+                            totalBudget: { type: Type.NUMBER },
+                        }
+                    }
+                },
+                subtotal: { type: Type.NUMBER },
+                salesTax: { type: Type.NUMBER },
+                totalProjectBudget: { type: Type.NUMBER },
+                overheadAndProfit: { type: Type.NUMBER },
+            }
+        },
+        workOrders: {
+            type: Type.ARRAY,
+            description: "Work orders for each trade.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    trade: { type: Type.STRING },
+                    budget: { type: Type.NUMBER },
+                    keyMaterials: { type: Type.STRING },
+                    instructions: { type: Type.ARRAY, items: { type: Type.STRING } },
+                },
+                required: ["trade"]
+            }
+        },
+        selectionSchedule: {
+            type: Type.OBJECT,
+            description: "Customer selection and material allowance schedule.",
+            properties: {
+                introductoryNote: { type: Type.STRING },
+                items: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            item: { type: Type.STRING },
+                            locations: { type: Type.STRING },
+                            quantity: { type: Type.STRING },
+                            allowancePerUnit: { type: Type.NUMBER },
+                            totalMaterialBudget: { type: Type.NUMBER },
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
 export const processPdfAndGenerateReport = async (file: File): Promise<string> => {
     try {
-        const fileBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument(fileBuffer).promise;
-        const numPages = pdf.numPages;
-        let fullText = '';
-        
-        for (let i = 1; i <= numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map((item: any) => item.str).join(' ');
-            fullText += `--- Page ${i} ---\n${pageText}\n\n`;
-        }
-
-        const masterPrompt = getMasterPrompt();
-
-        const fullPrompt = `${masterPrompt}\n\n---
-        
-Here is the data for analysis:
-
-**PDF Filename:** "${file.name}"
-
-**Extracted PDF Text Content:**
-\`\`\`
-${fullText}
-\`\`\`
-
-Now, please generate the required sections as a single, cohesive response based on the instructions and the provided data. Remember to use HTML tables for Sections 2 and 4, and create a separate '### Work Order: [Trade]' section for each trade.`;
-
+        const systemInstruction = getSystemInstruction();
+        const userPrompt = `PDF Filename for budget validation: "${file.name}". Please analyze the attached PDF and generate the required JSON output based on your instructions.`;
         const generativePart = await fileToGenerativePart(file);
 
-        const result = await ai.models.generateContent({
+        const result = await withBackoff(() => ai.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: { parts: [{ text: fullPrompt }, generativePart] },
-        });
+            contents: { parts: [{ text: userPrompt }, generativePart] },
+            config: {
+                systemInstruction: systemInstruction,
+                responseMimeType: "application/json",
+                responseSchema: responseSchema
+            }
+        }));
         
         if (!result.text) {
           throw new Error("Received an empty response from the AI model.");
@@ -157,7 +167,7 @@ Now, please generate the required sections as a single, cohesive response based 
         if (error instanceof Error && error.message.includes('API_KEY')) {
              throw new Error("Gemini API key is not configured correctly. Please check your environment variables.");
         }
-        throw new Error("Failed to process the PDF and generate the report.");
+        throw new Error(`Failed to process the PDF and generate the report. ${error instanceof Error ? error.message : ''}`);
     }
 };
 
