@@ -1,0 +1,5 @@
+{
+  "name": "Construction Project Document Generator",
+  "description": "An AI assistant that analyzes a property insurance claim estimate PDF and transforms it into a cohesive set of actionable project management documents, including scope of work, budget, work orders, and customer selection schedules.",
+  "requestFramePermissions": []
+}
